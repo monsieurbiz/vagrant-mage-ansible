@@ -20,6 +20,8 @@ You can change the URL in the `Vagrantfile` which is `mage.dev` by default.
 
 When it's running, just go to <http://mage.dev>.
 
+Of course you can access to the Setup Wizard: <http://mage.dev/setup>.
+
 ## Coding
 
 The `magento` folder (which will be created during the provisioning) is the root directory of the virtual host.
