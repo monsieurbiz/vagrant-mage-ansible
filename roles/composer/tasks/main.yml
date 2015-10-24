@@ -1,0 +1,11 @@
+---
+# Composer
+
+- name: Get composer
+  sudo: yes
+  shell: "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin; mv composer.phar composer"
+  args:
+    chdir: /usr/local/bin
+    creates: composer
+  tags: [composer]
+

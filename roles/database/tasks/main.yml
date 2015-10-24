@@ -1,0 +1,89 @@
+---
+# Install database
+- name: Add MariaDB apt key
+  sudo: yes
+  apt_key: url=http://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0xcbcb082a1bb943db
+  tags: [db]
+
+- name: Add MariaDB repository
+  sudo: yes
+  apt_repository: repo='deb http://ftp.igh.cnrs.fr/pub/mariadb/repo/10.0/debian wheezy main'
+  tags: [db]
+
+- name: Install MariaDB
+  sudo: yes
+  apt: name={{ item }} state=latest
+  with_items:
+    - mariadb-server
+    - mariadb-client
+    - python-mysqldb
+  tags: [db]
+
+- name: Ensure service is started
+  sudo: yes
+  service: name=mysql state=started enabled=yes
+  tags: [db]
+
+- name: Update configuration
+  sudo: yes
+  template: src=mysql.conf.j2 dest=/etc/mysql/my.cnf
+  notify: restart mysql
+  tags: [db]
+
+- name: Update root password
+  sudo: yes
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mariadb.root_password }}"
+    state: present
+  with_items:
+    - 127.0.0.1
+    - ::1
+    - localhost
+  tags: [db]
+
+- name: Create the .my.cnf for root
+  sudo: yes
+  template: src=root_my.cnf.j2 dest=/root/.my.cnf
+  tags: [db]
+
+- name: Create the .my.cnf for users
+  sudo: yes
+  sudo_user: "{{ item.user }}"
+  template: src=client_my.cnf.j2 dest=/home/{{ item.user }}/.my.cnf
+  with_items: projects
+  tags: [db]
+
+- name: Update root password for the current fqdn
+  sudo: yes
+  mysql_user:
+    name: root
+    host: "{{ ansible_fqdn }}"
+    password: "{{ mariadb.root_password }}"
+    state: present
+  tags: [db]
+
+- name: Create databases
+  sudo: yes
+  mysql_db:
+    name: "{{ item.1 }}"
+    state: present
+  with_subelements:
+    - projects
+    - db_names
+  tags: [db]
+
+- name: Create users
+  sudo: yes
+  mysql_user:
+    name: "{{ item.0.user }}"
+    host: "{{ item.1 }}"
+    password: "{{ item.0.user }}-password"
+    priv: "{{ item.0.db_privs | join('/') }}"
+    state: present
+  with_subelements:
+    - projects
+    - db_hosts
+  tags: [db]
+

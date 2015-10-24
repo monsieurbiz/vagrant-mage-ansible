@@ -1,0 +1,17 @@
+---
+
+# PHP-FPM
+- name: restart php-fpm
+  service: name=php5-fpm state=restarted
+
+# NGINX
+- name: restart nginx
+  service: name=nginx state=restarted
+
+# Restart both of them
+- name: restart webserver
+  service: name={{item}} state=restarted
+  with_items:
+    - php5-fpm
+    - nginx
+

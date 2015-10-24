@@ -1,0 +1,8 @@
+---
+# PHP config
+php:
+  timezone: "Europe/Paris"
+  post_max_size: 25M
+  upload_max_filesize: 24M
+  always_populate_raw_post_data: -1
+

@@ -1,0 +1,25 @@
+---
+# Vhosts
+projects:
+  - user: vagrant
+    group: vagrant
+    db_hosts: ["127.0.0.1", "::1", "localhost"]
+    db_names:
+      - magento
+    db_privs:
+      - "magento.*:ALL"
+    vhosts:
+      - identifier: magento
+        active: true
+        priority: 10
+        env: dev
+        type: magento
+        root_dir: /vagrant/magento/pub/
+        log_dir: /vagrant/logs/
+        server_names: mage.dev
+        mage:
+          root: /vagrant/magento
+          mode: developer
+        ssl: false
+        cert: []
+

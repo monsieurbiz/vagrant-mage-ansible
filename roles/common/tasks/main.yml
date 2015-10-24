@@ -1,0 +1,30 @@
+---
+# Common tasks
+
+# 18000s = 5h
+- name: Update the server
+  sudo: yes
+  apt: update_cache=true cache_valid_time=18000 upgrade=yes
+  tags: [common, update]
+
+- name: Install some packages
+  sudo: yes
+  apt: name={{item}} state=latest
+  with_items:
+    - vim
+    - build-essential
+    - tmux
+    - wget
+    - curl
+    - screen
+    - tidy
+    - htop
+    - lynx
+    - tig
+    - tree
+    - rsync
+    - gzip
+    - less
+    - gnupg
+  tags: [common]
+

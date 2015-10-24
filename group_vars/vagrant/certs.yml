@@ -1,0 +1,17 @@
+---
+# Certificates
+certs: []
+#  - name: example.dev.key
+#    dir: /etc/nginx/ssl/
+#    content: |
+#      -----BEGIN RSA PRIVATE KEY-----
+#      FOO
+#      -----END RSA PRIVATE KEY-----
+#
+#  - name: demo.dev.crt
+#    dir: /etc/nginx/ssl/
+#    content: |
+#      -----BEGIN CERTIFICATE-----
+#      BAR
+#      -----END CERTIFICATE-----
+

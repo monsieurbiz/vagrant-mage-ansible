@@ -1,0 +1,11 @@
+---
+# Magerun
+
+- name: Get magerun(s)
+  sudo: yes
+  get_url: url=http://files.magerun.net/n98-{{item}}-latest.phar dest=/usr/local/bin/magerun mode=0755
+  with_items:
+    - magerun
+    - magerun2
+  tags: [magerun]
+

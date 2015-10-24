@@ -1,0 +1,9 @@
+- hosts: vagrant
+  roles:
+    - common
+    - webserver
+    - database
+    - magerun
+    - modman
+    - composer
+

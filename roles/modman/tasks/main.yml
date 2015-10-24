@@ -1,0 +1,8 @@
+---
+# Modman
+
+- name: Get modman
+  sudo: yes
+  get_url: url=https://raw.githubusercontent.com/colinmollenhour/modman/master/modman dest=/usr/local/bin/modman mode=0755
+  tags: [modman]
+

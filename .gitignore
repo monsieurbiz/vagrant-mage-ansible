@@ -1,0 +1,11 @@
+# Vagrant
+# ¯¯¯¯¯¯¯
+.vagrant
+
+# Magento project
+# ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+# We ignore it because it's created by the provisioning and we want to keep
+# the possibility to have a git repository in magento/
+magento
+magento/*
+

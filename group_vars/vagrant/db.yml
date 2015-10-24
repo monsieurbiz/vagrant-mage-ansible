@@ -1,0 +1,5 @@
+---
+# Database main config
+mariadb:
+  root_password: mysql
+

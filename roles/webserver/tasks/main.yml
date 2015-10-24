@@ -1,0 +1,199 @@
+---
+# Webserver (with NGINX and PHP-FPM)
+
+- name: Install dotdeb key
+  sudo: yes
+  apt_key: url=http://www.dotdeb.org/dotdeb.gpg
+  tags: [web]
+
+- name: Install dotdeb repository
+  sudo: yes
+  apt_repository: repo='{{item}}'
+  with_items:
+    - "deb http://packages.dotdeb.org wheezy all"
+    - "deb-src http://packages.dotdeb.org wheezy all"
+    - "deb http://packages.dotdeb.org wheezy-php56 all"
+    - "deb-src http://packages.dotdeb.org wheezy-php56 all"
+  tags: [web]
+
+- name: Create nginx user
+  sudo: yes
+  user: name=nginx state=present createhome=no append=true groups=www-data
+  tags: [web]
+
+- name: Install Nginx
+  sudo: yes
+  apt: name=nginx state=latest
+  notify: restart webserver
+  tags: [web]
+
+- name: Update nginx configuration
+  sudo: yes
+  template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+  notify: restart webserver
+  tags: [web]
+
+- name: Disable default vhost
+  sudo: yes
+  file: name=/etc/nginx/sites-enabled/default state=absent
+  notify: restart webserver
+  tags: [web]
+
+- name: Install PHP-FPM and packages
+  sudo: yes
+  apt: name={{item}} state=latest
+  with_items:
+    - php5-fpm
+    - php5-cli
+    - php5-curl
+    - php5-gd
+    - php5-mcrypt
+    - php5-mysqlnd
+    - php5-tidy
+    - php5-intl
+    - php5-xsl
+
+- name: Update php conf
+  sudo: yes
+  replace:
+    dest: "{{ item[0] }}"
+    regexp: "{{ item[1].regexp }}"
+    replace: "{{ item[1].replace }}"
+  with_nested:
+    - ["/etc/php5/cli/php.ini", "/etc/php5/fpm/php.ini"]
+    - [
+        {
+          regexp: '^;?(date\.timezone =).*\n',
+          replace: '\1 {{ php.timezone }}\n'
+        },
+        {
+          regexp: '^(post_max_size =).+\n',
+          replace: '\1 {{ php.post_max_size }}\n'
+        },
+        {
+          regexp: '^;?(always_populate_raw_post_data =).+\n',
+          replace: '\1 {{ php.always_populate_raw_post_data }}\n'
+        },
+        {
+          regexp: '^(upload_max_filesize =).+\n',
+          replace: '\1 {{ php.upload_max_filesize }}\n'
+        }
+      ]
+  notify: restart webserver
+  tags: [web]
+
+- name: Create sockets dir
+  sudo: yes
+  file: state=directory dest=/var/run/php-fpm
+  tags: [web]
+
+- name: Disable default pool of PHP-FPM
+  sudo: yes
+  command: mv /etc/php5/fpm/pool.d/www.conf /etc/php5/fpm/pool.d/www.conf.disabled creates=/etc/php5/fpm/pool.d/www.conf.disabled
+  notify: restart webserver
+  tags: [web]
+
+# Create environments
+# ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+
+- name: Create users
+  sudo: yes
+  user:
+    name: "{{ item.user }}"
+    state: present
+    home: "/home/{{ item.user }}"
+    shell: /bin/bash
+  with_items: projects
+  tags: [web]
+
+- name: Create root dir
+  sudo: yes
+  file: name={{ item.1.root_dir }} state=directory
+  with_subelements:
+    - projects
+    - vhosts
+  tags: [web]
+
+- name: Create log dir
+  sudo: yes
+  file: name={{ item.1.log_dir }} state=directory
+  with_subelements:
+    - projects
+    - vhosts
+  when: item.1.log_dir
+  tags: [web]
+
+- name: Create PHP-FPM conf
+  sudo: yes
+  template: src=pool.conf.j2 dest=/etc/php5/fpm/pool.d/{{ item.1.priority }}-{{ item.1.identifier }}.conf
+  with_subelements:
+    - projects
+    - vhosts
+  when: item.1.active
+  notify: restart webserver
+  tags: [web]
+
+- name: Remove PHP-FPM conf for inactive vhosts
+  sudo: yes
+  file: name=/etc/php5/fpm/pool.d/{{ item.1.priority}}-{{ item.1.identifier }}.conf state=absent
+  with_subelements:
+    - projects
+    - vhosts
+  when: not item.1.active
+  notify: restart webserver
+  tags: [web]
+
+- name: Create vhost
+  sudo: yes
+  template: src=vhost-{{ item.1.type }}.conf.j2 dest=/etc/nginx/sites-available/{{ item.1.priority }}-{{ item.1.identifier }}.conf
+  with_subelements:
+    - projects
+    - vhosts
+  notify: restart webserver
+  tags: [web]
+
+- name: Active vhost
+  sudo: yes
+  file: state=link src=/etc/nginx/sites-available/{{ item.1.priority }}-{{ item.1.identifier }}.conf dest=/etc/nginx/sites-enabled/{{ item.1.priority }}-{{ item.1.identifier }}.conf
+  with_subelements:
+    - projects
+    - vhosts
+  when: item.1.active
+  notify: restart webserver
+  tags: [web]
+
+- name: Desactive vhost
+  sudo: yes
+  file: state=absent dest=/etc/nginx/sites-enabled/{{ item.1.priority }}-{{ item.1.identifier }}.conf
+  with_subelements:
+    - projects
+    - vhosts
+  when: not item.1.active
+  tags: [web]
+
+- name: Create certs directories (group nginx)
+  sudo: yes
+  no_log: yes
+  file: state=directory recurse=yes name={{ item.dir }} group=nginx
+  with_items: certs
+  tags: [web, ssl]
+
+- name: Copy certificates
+  sudo: yes
+  no_log: yes
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dir }}{{ item.name }}"
+    group: nginx
+    owner: nginx
+  with_items: certs
+  tags: [web, ssl]
+
+- name: Ensure services are running
+  sudo: yes
+  service: name={{ item }} state=started enabled=yes
+  with_items:
+    - nginx
+    - php5-fpm
+  tags: [web]
+
