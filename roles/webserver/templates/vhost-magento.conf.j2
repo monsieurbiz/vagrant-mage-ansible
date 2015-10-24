@@ -81,6 +81,7 @@ server {
     }
 
     location / {
+        root $MAGE_ROOT;
         try_files $uri $uri/ /index.php?$args;
     }
 
