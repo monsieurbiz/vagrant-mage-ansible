@@ -1,0 +1,15 @@
+---
+# NodeJS
+
+- name: Install nodejs repository
+  sudo: yes
+  shell: "curl -sL https://deb.nodesource.com/setup | bash -"
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+  tags: [nodejs]
+
+- name: Install nodejs
+  sudo: yes
+  apt: name=nodejs state=latest
+  tags: [nodejs]
+
