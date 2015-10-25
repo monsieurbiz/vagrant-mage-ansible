@@ -16,7 +16,8 @@
 
 Just run `vagrant up` and tada!
 
-You can change the URL in the `Vagrantfile` which is `mage.dev` by default.
+You can change the URL in the `Vagrantfile` which is `mage.dev` by default.  
+You have to change it into the ansible variables in `groups_vars/vagrant/projects.yml`.
 
 When it's running, just go to <http://mage.dev>.
 
@@ -40,11 +41,14 @@ Here are the tools (binary names) we provide out of the box:
 * tmux/screen
 * tig
 * gnupg
+* nodejs & npm
 * and others. Take a look at `roles/common/tasks/main.yml`.
 
 ## Database
 
 We use MariaDB, not MySQL
+
+DB name: `magento`
 
 * Users:
     * `root`: `mysql`
